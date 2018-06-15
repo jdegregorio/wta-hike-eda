@@ -3,7 +3,7 @@
 WTA Scraper
 Author:  Joseph DeGregorio
 
-Description:  This python script gathers all of thie hike and trip report information 
+Description:  This python script gathers all of the hike page URLs 
 from the Washington Trails Association (WTA) webpage (www.wta.org/).
 
 """
