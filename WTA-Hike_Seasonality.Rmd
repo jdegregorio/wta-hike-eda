@@ -5,12 +5,50 @@ author: Joseph A. DeGregorio
 date: 6/4/2018
 
 ---
+#Setup
+```{r}
+
+#List of the required packages
+packages.project <- c("dplyr",
+                      "ggplot2", 
+                      "caret",  
+                      "doSNOW", 
+                      "parallel", 
+                      "reshape2")
+
+#Find packages that are not installed
+packages.new <- packages.project[!(packages.project %in% installed.packages()[,"Package"])]
+
+#Install the new packages
+if(length(packages.new)) install.packages(packages.new)
+
+#Load packages
+lapply(packages.project, library, character.only=TRUE)
+
+```
+
+
 
 #Gather Data
 
 The Washington Trails Association website provides a vast amount of data about hiking trails available throughout Washington State. In addition to descriptive data on each trail, users of the site can submit trip reports to summarize their experiences and add to the community knowledgebase.
 
 This data is not readily available through an API. Rather than webscraping the data myself, I have decided to leverage scraped data from a related project (https://github.com/Jadetabony/wta_hikes/tree/master/data).
+
+```{python, engine.path="/Users/Joe/Anaconda3/python.exe"}
+from bs4 import BeautifulSoup as soup
+import requests
+
+url = 'https://www.wta.org/go-outside/hikes'
+print('URL: ', url)
+
+r = requests.get(url)
+print(r.text[0:500])
+
+
+
+```
+
 
 
 ```{r}
@@ -21,5 +59,9 @@ data.trips <- read.csv(file="data/trips.csv", header=TRUE, sep=",")
 #Review Summary
 head(data.hikes)
 head(data.trips)
+```
+
+```{python, engine.path="/Users/Joe/Anaconda3/python.exe"}
+print("Hello World")
 ```
 

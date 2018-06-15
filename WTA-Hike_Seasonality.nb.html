@@ -176,21 +176,71 @@ $(document).ready(function () {
 
 
 <!-- rnb-text-begin -->
+<div id="setup" class="section level1">
+<h1>Setup</h1>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShrbml0cilcbmtuaXRyOjpvcHRzX2NodW5rJHNldChlbmdpbmUucGF0aCA9IGxpc3QocHl0aG9uID0gXCJDOlxcXFxVc2Vyc1xcXFxKb2VcXFxcQW5hY29uZGEzXFxcXHB5dGhvbi5leGVcIikpXG5gYGAifQ== -->
+<pre class="r"><code>library(knitr)
+knitr::opts_chunk$set(engine.path = list(python = &quot;C:\\Users\\Joe\\Anaconda3\\python.exe&quot;))</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
 <div id="gather-data" class="section level1">
 <h1>Gather Data</h1>
 <p>The Washington Trails Association website provides a vast amount of data about hiking trails available throughout Washington State. In addition to descriptive data on each trail, users of the site can submit trip reports to summarize their experiences and add to the community knowledgebase.</p>
 <p>This data is not readily available through an API. Rather than webscraping the data myself, I have decided to leverage scraped data from a related project (<a href="https://github.com/Jadetabony/wta_hikes/tree/master/data" class="uri">https://github.com/Jadetabony/wta_hikes/tree/master/data</a>).</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGxvdChjYXJzKVxuYGBgIn0= -->
-<pre class="r"><code>plot(cars)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgcHl0aG9uXG5mcm9tIGJzNCBpbXBvcnQgQmVhdXRpZnVsU291cCBhcyBzb3VwXG5pbXBvcnQgcmVxdWVzdHNcblxudXJsID0gJ2h0dHBzOi8vd3d3Lnd0YS5vcmcvZ28tb3V0c2lkZS9oaWtlcydcbnByaW50KCdVUkw6ICcsIHVybClcblxuciA9IHJlcXVlc3RzLmdldCh1cmwpXG5wcmludChyLnRleHRbMDo1MDBdKVxuXG5cblxuYGBgIn0= -->
+<pre class="python"><code>from bs4 import BeautifulSoup as soup
+import requests
+
+url = 'https://www.wta.org/go-outside/hikes'
+print('URL: ', url)
+
+r = requests.get(url)
+print(r.text[0:500])
+</code></pre>
 <!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiVVJMOiAgaHR0cHM6Ly93d3cud3RhLm9yZy9nby1vdXRzaWRlL2hpa2VzXG48IURPQ1RZUEUgaHRtbCBQVUJMSUMgXCItLy9XM0MvL0RURCBYSFRNTCAxLjAgVHJhbnNpdGlvbmFsLy9FTlwiIFwiaHR0cDovL3d3dy53My5vcmcvVFIveGh0bWwxL0RURC94aHRtbDEtdHJhbnNpdGlvbmFsLmR0ZFwiPjxodG1sIHhtbG5zOnhsaW5rPVwiaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGlua1wiIGxhbmc9XCJlblwiIHhtbDpsYW5nPVwiZW5cIj5cbjxoZWFkPjxtZXRhIGh0dHAtZXF1aXY9XCJDb250ZW50LVR5cGVcIiBjb250ZW50PVwidGV4dC9odG1sOyBjaGFyc2V0PVVURi04XCIgLz5cblxuICAgICAgICA8IS0tXG4gICAgICAgIC8qIEBsaWNlbnNlXG4gICAgICAgICAqIE15Rm9udHMgV2ViZm9udCBCdWlsZCBJRCAyMjI5MDY2LCAyMDEyLTA0LTEyVDE1OjUzOjA5LTA0MDBcbiAgICAgICAgICpcbiAgICAgICAgICogVGhlIGZvbnRzIGxpc3RlZCBpbiB0aGlzIG5vdGljZSBhcmUgc3ViamVjdCB0byB0aGUgRW5kIFVzZXIgTGljZW5zZVxuICAgICAgICAgKiBBZ3JlZW1lbnQocykgZW50ZXJlZCBpbnRcbiJ9 -->
+<pre><code>URL:  https://www.wta.org/go-outside/hikes
+&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;&lt;html xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot; lang=&quot;en&quot; xml:lang=&quot;en&quot;&gt;
+&lt;head&gt;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot; /&gt;
+
+        &lt;!--
+        /* @license
+         * MyFonts Webfont Build ID 2229066, 2012-04-12T15:53:09-0400
+         *
+         * The fonts listed in this notice are subject to the End User License
+         * Agreement(s) entered int</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI1JlYWQgQ1NWIEZpbGVzIGludG8gUlxuZGF0YS5oaWtlcyA8LSByZWFkLmNzdihmaWxlPVwiZGF0YS9oaWtlcy5jc3ZcIiwgaGVhZGVyPVRSVUUsIHNlcD1cIixcIilcbmRhdGEudHJpcHMgPC0gcmVhZC5jc3YoZmlsZT1cImRhdGEvdHJpcHMuY3N2XCIsIGhlYWRlcj1UUlVFLCBzZXA9XCIsXCIpXG5gYGAifQ== -->
+<pre class="r"><code>#Read CSV Files into R
+data.hikes &lt;- read.csv(file=&quot;data/hikes.csv&quot;, header=TRUE, sep=&quot;,&quot;)
+data.trips &lt;- read.csv(file=&quot;data/trips.csv&quot;, header=TRUE, sep=&quot;,&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgcHl0aG9uXG5wcmludChcIkhlbGxvIFdvcmxkXCIpXG5gYGAifQ== -->
+<pre class="python"><code>print(&quot;Hello World&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiSGVsbG8gV29ybGRcbiJ9 -->
+<pre><code>Hello World</code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 </div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkFuYWx5emluZyB0aGUgU2Vhc29uYWxpdHkgb2YgV2FzaGluZ3RvbiBIaWtpbmcgVHJhaWxzIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQphdXRob3I6IEpvc2VwaCBBLiBEZUdyZWdvcmlvDQpkYXRlOiA2LzQvMjAxOA0KDQotLS0NCg0KI0dhdGhlciBEYXRhDQoNClRoZSBXYXNoaW5ndG9uIFRyYWlscyBBc3NvY2lhdGlvbiB3ZWJzaXRlIHByb3ZpZGVzIGEgdmFzdCBhbW91bnQgb2YgZGF0YSBhYm91dCBoaWtpbmcgdHJhaWxzIGF2YWlsYWJsZSB0aHJvdWdob3V0IFdhc2hpbmd0b24gU3RhdGUuIEluIGFkZGl0aW9uIHRvIGRlc2NyaXB0aXZlIGRhdGEgb24gZWFjaCB0cmFpbCwgdXNlcnMgb2YgdGhlIHNpdGUgY2FuIHN1Ym1pdCB0cmlwIHJlcG9ydHMgdG8gc3VtbWFyaXplIHRoZWlyIGV4cGVyaWVuY2VzIGFuZCBhZGQgdG8gdGhlIGNvbW11bml0eSBrbm93bGVkZ2ViYXNlLg0KDQpUaGlzIGRhdGEgaXMgbm90IHJlYWRpbHkgYXZhaWxhYmxlIHRocm91Z2ggYW4gQVBJLiBSYXRoZXIgdGhhbiB3ZWJzY3JhcGluZyB0aGUgZGF0YSBteXNlbGYsIEkgaGF2ZSBkZWNpZGVkIHRvIGxldmVyYWdlIHNjcmFwZWQgZGF0YSBmcm9tIGEgcmVsYXRlZCBwcm9qZWN0IChodHRwczovL2dpdGh1Yi5jb20vSmFkZXRhYm9ueS93dGFfaGlrZXMvdHJlZS9tYXN0ZXIvZGF0YSkuDQoNCg0KYGBge3J9DQpwbG90KGNhcnMpDQpgYGANCg0K</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkFuYWx5emluZyB0aGUgU2Vhc29uYWxpdHkgb2YgV2FzaGluZ3RvbiBIaWtpbmcgVHJhaWxzIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQphdXRob3I6IEpvc2VwaCBBLiBEZUdyZWdvcmlvDQpkYXRlOiA2LzQvMjAxOA0KDQotLS0NCiNTZXR1cA0KYGBge3J9DQoNCiNMaXN0IG9mIHRoZSByZXF1aXJlZCBwYWNrYWdlcw0KcGFja2FnZXMucHJvamVjdCA8LSBjKCJkcGx5ciIsDQogICAgICAgICAgICAgICAgICAgICAgImdncGxvdDIiLCANCiAgICAgICAgICAgICAgICAgICAgICAiY2FyZXQiLCAgDQogICAgICAgICAgICAgICAgICAgICAgImRvU05PVyIsIA0KICAgICAgICAgICAgICAgICAgICAgICJwYXJhbGxlbCIsIA0KICAgICAgICAgICAgICAgICAgICAgICJyZXNoYXBlMiIpDQoNCiNGaW5kIHBhY2thZ2VzIHRoYXQgYXJlIG5vdCBpbnN0YWxsZWQNCnBhY2thZ2VzLm5ldyA8LSBwYWNrYWdlcy5wcm9qZWN0WyEocGFja2FnZXMucHJvamVjdCAlaW4lIGluc3RhbGxlZC5wYWNrYWdlcygpWywiUGFja2FnZSJdKV0NCg0KI0luc3RhbGwgdGhlIG5ldyBwYWNrYWdlcw0KaWYobGVuZ3RoKHBhY2thZ2VzLm5ldykpIGluc3RhbGwucGFja2FnZXMocGFja2FnZXMubmV3KQ0KDQojTG9hZCBwYWNrYWdlcw0KbGFwcGx5KHBhY2thZ2VzLnByb2plY3QsIGxpYnJhcnksIGNoYXJhY3Rlci5vbmx5PVRSVUUpDQoNCmBgYA0KDQoNCg0KI0dhdGhlciBEYXRhDQoNClRoZSBXYXNoaW5ndG9uIFRyYWlscyBBc3NvY2lhdGlvbiB3ZWJzaXRlIHByb3ZpZGVzIGEgdmFzdCBhbW91bnQgb2YgZGF0YSBhYm91dCBoaWtpbmcgdHJhaWxzIGF2YWlsYWJsZSB0aHJvdWdob3V0IFdhc2hpbmd0b24gU3RhdGUuIEluIGFkZGl0aW9uIHRvIGRlc2NyaXB0aXZlIGRhdGEgb24gZWFjaCB0cmFpbCwgdXNlcnMgb2YgdGhlIHNpdGUgY2FuIHN1Ym1pdCB0cmlwIHJlcG9ydHMgdG8gc3VtbWFyaXplIHRoZWlyIGV4cGVyaWVuY2VzIGFuZCBhZGQgdG8gdGhlIGNvbW11bml0eSBrbm93bGVkZ2ViYXNlLg0KDQpUaGlzIGRhdGEgaXMgbm90IHJlYWRpbHkgYXZhaWxhYmxlIHRocm91Z2ggYW4gQVBJLiBSYXRoZXIgdGhhbiB3ZWJzY3JhcGluZyB0aGUgZGF0YSBteXNlbGYsIEkgaGF2ZSBkZWNpZGVkIHRvIGxldmVyYWdlIHNjcmFwZWQgZGF0YSBmcm9tIGEgcmVsYXRlZCBwcm9qZWN0IChodHRwczovL2dpdGh1Yi5jb20vSmFkZXRhYm9ueS93dGFfaGlrZXMvdHJlZS9tYXN0ZXIvZGF0YSkuDQoNCmBgYHtweXRob24sIGVuZ2luZS5wYXRoPSIvVXNlcnMvSm9lL0FuYWNvbmRhMy9weXRob24uZXhlIn0NCmZyb20gYnM0IGltcG9ydCBCZWF1dGlmdWxTb3VwIGFzIHNvdXANCmltcG9ydCByZXF1ZXN0cw0KDQp1cmwgPSAnaHR0cHM6Ly93d3cud3RhLm9yZy9nby1vdXRzaWRlL2hpa2VzJw0KcHJpbnQoJ1VSTDogJywgdXJsKQ0KDQpyID0gcmVxdWVzdHMuZ2V0KHVybCkNCnByaW50KHIudGV4dFswOjUwMF0pDQoNCg0KDQpgYGANCg0KDQoNCmBgYHtyfQ0KI1JlYWQgQ1NWIEZpbGVzIGludG8gUg0KZGF0YS5oaWtlcyA8LSByZWFkLmNzdihmaWxlPSJkYXRhL2hpa2VzLmNzdiIsIGhlYWRlcj1UUlVFLCBzZXA9IiwiKQ0KZGF0YS50cmlwcyA8LSByZWFkLmNzdihmaWxlPSJkYXRhL3RyaXBzLmNzdiIsIGhlYWRlcj1UUlVFLCBzZXA9IiwiKQ0KDQojUmV2aWV3IFN1bW1hcnkNCmhlYWQoZGF0YS5oaWtlcykNCmhlYWQoZGF0YS50cmlwcykNCmBgYA0KDQpgYGB7cHl0aG9uLCBlbmdpbmUucGF0aD0iL1VzZXJzL0pvZS9BbmFjb25kYTMvcHl0aG9uLmV4ZSJ9DQpwcmludCgiSGVsbG8gV29ybGQiKQ0KYGBgDQoNCg==</div>
 
 
 
