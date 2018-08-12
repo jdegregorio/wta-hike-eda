@@ -77,8 +77,3 @@ print("\n")
 #Save hike URLs to a csv file for the next phase of scraping
 df = pd.DataFrame(hike_urls, columns=['URL'])
 df.to_csv("hike_urls.csv", index = False, encoding = "utf-8")
-
-#Print Complete
-print("\n")
-print("Scraping Complete!!!")
-print("\n")
