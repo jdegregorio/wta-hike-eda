@@ -35,7 +35,7 @@ delay = 6
 hike_data = []
 
 #Temporarily shorten list of URLS for debugging
-hike_urls = hike_urls[30:35]
+#hike_urls = hike_urls[30:32]
 
 for index, url in enumerate(hike_urls):
     #Print Status
@@ -60,11 +60,12 @@ for index, url in enumerate(hike_urls):
     
     #Region
     key = 'Region'
-    target = hike.find('div', attrs={'id': 'hike-region'}).find('span')
+    target = hike.find('div', attrs={'id': 'hike-region'})
     if str(target) != 'None':
+        target = target.find('span')
         val = target.text.strip()
         hike_data.append([name, key, val])
-    
+
     #Hike Stats (No ID)
     hikestats = hike.find_all('div', attrs={'class':'hike-stat', 'id':''})
     for hikestat in hikestats:
@@ -80,9 +81,9 @@ for index, url in enumerate(hike_urls):
     
     #Distance
     key = 'Distance'
-    target = hike.find('div', attrs={'id':'distance'}).span
+    target = hike.find('div', attrs={'id':'distance'})
     if str(target) != 'None':
-        val = target.text.strip()
+        val = target.span.text.strip()
         hike_data.append([name, key, val])
     
     #Current Rating
@@ -100,11 +101,13 @@ for index, url in enumerate(hike_urls):
         hike_data.append([name, key, val])
     
     #Hike Features
-    features = hike.find('div', attrs={'id':'hike-features'}).find_all('div', attrs= {'class': ['feature alpha ', 'feature ']})
-    for feat in features:
-        key = feat.get('data-title')
-        val = True
-        hike_data.append([name, key, val])
+    target = hike.find('div', attrs={'id':'hike-features'})
+    if str(target) != 'None':
+        targets = target.find_all('div', attrs= {'class': ['feature alpha ', 'feature ']})
+        for feat in targets:
+            key = feat.get('data-title')
+            val = 'True'
+            hike_data.append([name, key, val])
     
     #Permits/Passes
     key = 'Permits'
@@ -136,38 +139,42 @@ for index, url in enumerate(hike_urls):
     
     #Driving Directions
     key = 'Directions'
-    targets = hike.find('div', attrs={'id':'driving-directions'}).find_all('p')
-    val = ''
-    if str(targets) != 'None':
+    target = hike.find('div', attrs={'id':'driving-directions'})
+    if str(target) != 'None':
+        val = ''
+        targets = target.find_all('p')
         for target in targets:
             val = val + target.text.strip() + ' '
         hike_data.append([name, key, val])
     
     #GPS Coordinates
-    latlong = hike.find('div', attrs={'class':'latlong'}).find_all('span')
-    if str(latlong) != 'None':
-        if len(latlong) == 2:
+    target = hike.find('div', attrs={'class':'latlong'})
+    if str(target) != 'None':
+        targets = target.find_all('span')
+        if len(targets) == 2:
             key = 'Lat'
-            val = latlong[0].text.strip()
+            val = targets[0].text.strip()
             hike_data.append([name, key, val])
             
             key = 'Long'
-            val = latlong[1].text.strip()
+            val = targets[1].text.strip()
             hike_data.append([name, key, val])
     
     #Trailhead
     key = 'Trailhead'
-    val = ''
-    targets = hike.find('div', attrs={'id':'trailhead-details'}).find_all('p')
-    for target in targets:
-        val = val + target.text.strip() + ' '
-    hike_data.append([name, key, val])
+    target = hike.find('div', attrs={'id':'trailhead-details'})
+    if str(target) != 'None':
+        targets = target.find_all('p')
+        val = ''
+        for target in targets:
+            val = val + target.text.strip() + ' '
+        hike_data.append([name, key, val])
     
-    #Teme delay before loading next page
+    #Time delay before loading next page
     sleep(delay)
 
 
 df = pd.DataFrame.from_records(hike_data, columns = ['Hike', 'Key', 'Value'])
-#df.to_csv("hike_data.csv", index = False, encoding = "utf-8")
+df.to_csv("hike_data_molten.csv", index = False, encoding = "utf-8")
 
 
