@@ -21,6 +21,8 @@ from time import sleep
 
 #Create list to store extracted report URLs
 report_urls = []
+headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36'}
+
 
 #--------------------------------------------#
 #               Generate Page URLS
@@ -30,7 +32,7 @@ report_urls = []
 url_base = 'https://www.wta.org/@@search_tripreport_listing?b_size=1000&b_start:int='
 
 #Define page increments
-url_pages = arange(0, 125000, 1000)
+url_pages = arange(0, 150000, 1000)
 
 #Print Start
 print("\n")
@@ -46,7 +48,7 @@ for p in list(range(len(url_pages))):
     #--------------------------------------------#
     
     #Request HTLM from webpage
-    req = requests.get(url)
+    req = requests.get(url, headers = headers)
     
     #Create Soup
     soup  = BeautifulSoup(req.text, 'html.parser')
@@ -61,7 +63,7 @@ for p in list(range(len(url_pages))):
     #Extract report URLs
     for i in list(range(len(reports))):
         
-        report_urls.append(reports[i].find('a')['href'])
+        report_urls.append(reports[i].find('a', attrs={'class':'listitem-title'})['href'])
         #print(report_urls[i])
     
     #Print progress
