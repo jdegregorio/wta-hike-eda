@@ -1,4 +1,3 @@
 WTA-Hike-Seasonality/Data/* linguist-vendored
-WTA-Hike-Seasonality/Scraper/*.csv linguist-vendored
-WTA-Hike-Seasonality/*.csv linguist-vendored
-WTA-Hike-Seasonality/WTA-Hike_Seasonality.nb.html linguist-vendored
+Data/* linguist-vendored
+WTA-Hike_Seasonality.nb.html linguist-vendored
