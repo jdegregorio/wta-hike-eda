@@ -4,7 +4,7 @@ WTA Hike Page Scraper
 Author: Joseph DeGregorio
 Created:Thu Jun 14 20:46:30 2018
 
-Description:  This python script gathers all of the hike page information 
+Description:  This python script gathers all of the hike page information
 from the Washington Trails Association (WTA) webpage (www.wta.org/). This
 script leverages a previously scraped list of hike URLs.
 
@@ -40,10 +40,10 @@ hike_data = []
 #hike_urls = hike_urls[index_start:len(hike_urls)]
 
 for index, url in enumerate(hike_urls):
-    
+
     #Hike ID
     hike_id = url.rpartition('/')[2]
-    
+
     #Print Status
     print("\n")
     print('Scraping %d of %d pages.........' % (index + 1, len(hike_urls)))
@@ -51,7 +51,7 @@ for index, url in enumerate(hike_urls):
     print('               Remaining pages:  %f' % (len(hike_urls) - (index+1)))
     print('              Percent Complete:  %f' % ((index+1)/len(hike_urls)))
     print('Estimated Time Remaining (hrs):  %f' % ((len(hike_urls) - (index+1))*delay*(1/3600)))
-    
+
     #Request HTLM from webpage
     req = ''
     attempt = 1
@@ -69,23 +69,23 @@ for index, url in enumerate(hike_urls):
             continue
     if attempt == attempt_max:
         continue
-    
+
     #Create Soup
     soup  = BeautifulSoup(req.text, 'html.parser')
-    
+
     if type(soup) is type(None):
         continue
-    
+
     #Further refine soup to the hike wrapper division
     try:
         hike = soup.find('div', attrs = {'id': 'hike-wrapper'})
     except:
         print('    -Could not find hike wrapper')
         continue
-    
+
     if type(hike) is type(None):
         continue
-    
+
     #Hike Name
     key = 'Name'
     try:
@@ -94,7 +94,7 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-    
+
     #Region
     key = 'Region'
     try:
@@ -113,14 +113,14 @@ for index, url in enumerate(hike_urls):
             try:
                 if len(hikestat_vals) == 1:
                     hikestat_header = hikestat.find('h4', attrs={'id':''}).text.strip()
-                else: 
+                else:
                     hikestat_header = hikestat.find('h4', attrs={'id':''}).text.strip() + '_' + str(i)
                 key = hikestat_header
                 val = hikestat_val.text.strip()
                 hike_data.append([hike_id, key, val])
             except:
                 print('    -Could not find hike stats')
-                
+
     #Distance
     key = 'Distance'
     try:
@@ -129,7 +129,7 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-    
+
     #Current Rating
     key = 'Rating'
     try:
@@ -138,7 +138,7 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-        
+
     #Rating Count
     key = 'Rating_Count'
     try:
@@ -147,7 +147,7 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-    
+
     #Hike Features
     try:
         target = hike.find('div', attrs={'id':'hike-features'})
@@ -158,7 +158,7 @@ for index, url in enumerate(hike_urls):
             hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find hike features')
-        
+
     #Permits/Passes
     key = 'Permits'
     try:
@@ -167,7 +167,7 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-        
+
     #Alerts
     key = 'Alerts'
     try:
@@ -176,7 +176,7 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-        
+
     #Trip Report Count
     key = 'Trip_Report_Cnt'
     try:
@@ -185,7 +185,7 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-        
+
     #Description
     key = 'Description'
     try:
@@ -194,7 +194,7 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-        
+
     #Driving Directions
     key = 'Directions'
     try:
@@ -206,7 +206,7 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-        
+
     #GPS Coordinates
     try:
         target = hike.find('div', attrs={'class':'latlong'})
@@ -215,13 +215,13 @@ for index, url in enumerate(hike_urls):
             key = 'Lat'
             val = targets[0].text.strip()
             hike_data.append([hike_id, key, val])
-            
+
             key = 'Long'
             val = targets[1].text.strip()
             hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: GPS Coordinates')
-        
+
     #Trailhead
     key = 'Trailhead'
     try:
@@ -233,13 +233,10 @@ for index, url in enumerate(hike_urls):
         hike_data.append([hike_id, key, val])
     except:
         print('    -Could not find attribute: %s' % (key))
-        
+
     #Time delay before loading next page
     sleep(delay)
 
-
+#Save data
 df = pd.DataFrame.from_records(hike_data, columns = ['ID', 'Key', 'Value'])
-df.to_csv("hike_data_molten.csv", index = False, encoding = "utf-8")
-#df_piv = df.pivot(index = 'Hike', columns = 'Key', values = 'Value')
-
-
+df.to_csv("../Cleaning/hike_data_molten.csv", index = False, encoding = "utf-8")
