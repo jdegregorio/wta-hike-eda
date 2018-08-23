@@ -15,7 +15,6 @@ from scraping as input, pivots the data, and cleans each field.
 # Load Libraries
 import pandas as pd
 import numpy as np
-import os
 import cleanpy
 import pandas_summary
 
@@ -24,7 +23,7 @@ import pandas_summary
 # =============================================================================
 
 # Import Hike Data (Molten State)
-df_hikes_molten = pd.read_csv('../Cleaning/hike_data_molten.csv', encoding = "utf-8")
+df_hikes_molten = pd.read_csv('../Data/hike_data_molten.csv', encoding = "utf-8")
 
 # =============================================================================
 #                                Basic Cleaning
@@ -156,4 +155,5 @@ df_sum = pandas_summary.DataFrameSummary(df_hikes)
 np.transpose(df_sum.columns_stats)
 
 #Save csv
-df_hikes.to_csv("../Data_1/hikes.csv", index = False, encoding = "utf-8")
+df_hikes.to_csv("../Data/hikes.csv", index = False, encoding = "utf-8")
+df_hikes.to_pickle("../Data/hikes.pkl")
