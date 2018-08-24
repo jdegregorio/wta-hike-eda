@@ -16,6 +16,7 @@ from scraping as input, pivots the data, and cleans each field.
 import pandas as pd
 import numpy as np
 import pandas_summary
+import matplotlib.pyplot as plt
 
 # =============================================================================
 #                                 Import Data
@@ -121,31 +122,30 @@ for col in col_cat:
 
 df_rpts[col_cat] = df_rpts[col_cat].astype('category')
 
+#Update Date Fields
+df_rpts['ReportDate'] = df_rpts['ReportDate'].astype('datetime64')
+
 # Organize Columns
-gp_core = ['ID', 'URL', 'Name']
-gp_area = ['Region', 'Location','Trailhead']
-gp_gps = ['Lat', 'Long']
-gp_stats = ['Distance', 'Distance_Type', 'Elevation_Gain', 'Elevation_Peak']
-gp_text = ['Description', 'Directions']
-gp_pop = ['Rating', 'Rating_Cnt', 'Trip_Report_Cnt']
-gp_feat  = ['Dogs_Leashed', 'Dogs_None', 'Kid_Friendly', 'Campsites', 'Lakes', 'Rivers', 'Mountain_Views', 'Summits', 'Ridges_Passes', 'Old_Growth', 'Fall_Foliage', 'Flowers_Meadows', 'Wildlife']
-gp_other = ['Alerts', 'Permits']
+gp_core = ['ReportID', 'Report_URL', 'HikeID', 'Author', 'UserID', 'ReportDate']
+gp_desc = ['TypeofHike', 'ReportBody', 'ImageCnt', 'ReportHelpfulCnt']
+gp_cond = ['Cond_Trail', 'Cond_Road', 'Cond_Snow', 'Cond_Bugs']
+gp_haz = ['Haz_BridgeOut', 'Haz_DifStreamCrossing', 'Haz_Washout', 'Haz_Muddy', 'Haz_Overgrown', 'Haz_DownTrees']
+gp_feat = ['Feat_Fallfoliage', 'Feat_Hikedwithadog', 'Feat_Hikedwithkids', 'Feat_Ripeberries', 'Feat_Wildflowersblooming']
 
-
-
-#########################################################################
-#########################################################################
-#########################################################################
-#########################################################################
-
-
-
-df_rpts = df_rpts[gp_core + gp_area + gp_gps + gp_stats + gp_text + gp_pop + gp_feat + gp_other]
+df_rpts = df_rpts[gp_core + gp_desc + gp_cond + gp_haz + gp_feat]
 
 #Create summary
-df_sum = pandas_summary.DataFrameSummary(df_rpts)
+df_sum = np.transpose(pandas_summary.DataFrameSummary(df_rpts).columns_stats)
 np.transpose(df_sum.columns_stats)
 
 #Save csv
 df_rpts.to_csv("../Data/reports.csv", index = False, encoding = "utf-8")
 df_rpts.to_pickle("../Data/reports.pkl")
+
+
+#Summary Plot
+df_plot = df_rpts[['ReportDate', 'Cond_Snow']]
+df_plot.ReportDate = df_plot.ReportDate.dt.month
+df_plot.groupby()
+
+
