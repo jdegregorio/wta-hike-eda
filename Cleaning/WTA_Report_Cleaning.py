@@ -16,20 +16,20 @@ from scraping as input, pivots the data, and cleans each field.
 import pandas as pd
 import numpy as np
 import pandas_summary
-import matplotlib.pyplot as plt
 
 # =============================================================================
 #                                 Import Data
 # =============================================================================
 
+print('Importing Data...', end='')
 # Import Hike Data (Molten State)
 df_rpts_molten = pd.read_csv('../Data/reports_data_molten.csv', encoding = "utf-8", engine = 'python')
-
+print('Complete')
 
 # =============================================================================
 #                                Basic Cleaning
 # =============================================================================
-
+print('Basic Cleaning...', end='')
 # Remove Incomplete Records
 df_rpts_molten.dropna(inplace=True)
 
@@ -47,9 +47,11 @@ df_rpts = df_rpts[df_rpts.HikeID.notna()]
 #Rename ID field as "ReportID"
 df_rpts.rename(columns = {'ID':'ReportID'}, inplace=True)
 
+print('Complete')
 # =============================================================================
 #                              Clean Variables
 # =============================================================================
+print('Cleaning Variables...', end='')
 
 # Trail Conditions
 # Split basic condition category from list of hazards
@@ -81,15 +83,6 @@ del df_tc
 del rename
 df_rpts.drop(columns = 'Cond_TrailConditions', inplace=True)
 
-#Quantify Trip Conditions - Based on occurence
-col_conds = df_rpts.columns[df_rpts.columns.str.startswith('Cond')]
-for col in col_conds:
-    print('\n',col)
-    print(df_rpts[col].value_counts()/df_rpts[col].value_counts().max())
-    levs = df_rpts[col].value_counts()/df_rpts[col].value_counts().max()
-    for i in list(range(levs.shape[0])):
-        df_rpts[col] = np.where(df_rpts[col] == levs.index[i], levs[i], df_rpts[col])
-
 #Fix Feature Boolean Variables
 col_feats = df_rpts.columns[df_rpts.columns.str.startswith('Feat')]
 for col in col_feats:
@@ -115,10 +108,10 @@ for col in df_rpts.columns:
     if (tp & nu):
         col_cat.append(col)
 
-for col in col_cat:
-    print(col)
-    print(df_rpts[col].value_counts()[:6])
-    print()
+#for col in col_cat:
+#    print(col)
+#    print(df_rpts[col].value_counts()[:6])
+#    print()
 
 df_rpts[col_cat] = df_rpts[col_cat].astype('category')
 
@@ -136,16 +129,16 @@ df_rpts = df_rpts[gp_core + gp_desc + gp_cond + gp_haz + gp_feat]
 
 #Create summary
 df_sum = np.transpose(pandas_summary.DataFrameSummary(df_rpts).columns_stats)
-np.transpose(df_sum.columns_stats)
+
+print('Complete')
+
+# =============================================================================
+#                              Export Data
+# =============================================================================
+print('Exporting Data...', end='')
 
 #Save csv
 df_rpts.to_csv("../Data/reports.csv", index = False, encoding = "utf-8")
 df_rpts.to_pickle("../Data/reports.pkl")
 
-
-#Summary Plot
-df_plot = df_rpts[['ReportDate', 'Cond_Snow']]
-df_plot.ReportDate = df_plot.ReportDate.dt.month
-df_plot.groupby()
-
-
+print('Complete')

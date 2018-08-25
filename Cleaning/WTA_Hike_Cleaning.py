@@ -21,13 +21,16 @@ import pandas_summary
 # =============================================================================
 #                                 Import Data
 # =============================================================================
+print('Importing Data...', end='')
 
 # Import Hike Data (Molten State)
 df_hikes_molten = pd.read_csv('../Data/hike_data_molten.csv', encoding = "utf-8")
 
+print('Complete')
 # =============================================================================
 #                                Basic Cleaning
 # =============================================================================
+print('Basic Cleaning...', end='')
 
 # Remove Incomplete Records
 df_hikes_molten.dropna(inplace=True)
@@ -62,9 +65,11 @@ df_hikes.rename(columns = new_names, inplace=True)
 # Add URL Column
 df_hikes['URL'] = 'https://www.wta.org/go-hiking/hikes/' + df_hikes['ID']
 
+print('Complete')
 # =============================================================================
 #                              Clean Variables
 # =============================================================================
+print('Cleaning Variables...\n')
 
 #Remove any duplicate columns
 cleanpy.dropdupcol(df_hikes)
@@ -131,10 +136,10 @@ for col in df_hikes.columns:
     if (tp & nu):
         col_cat.append(col)
 
-for col in col_cat:
-    print(col)
-    print(df_hikes[col].value_counts()[:6])
-    print()
+#for col in col_cat:
+#    print(col)
+#    print(df_hikes[col].value_counts()[:6])
+#    print()
 
 df_hikes[col_cat] = df_hikes[col_cat].astype('category')
 
@@ -154,6 +159,14 @@ df_hikes = df_hikes[gp_core + gp_area + gp_gps + gp_stats + gp_text + gp_pop + g
 df_sum = pandas_summary.DataFrameSummary(df_hikes)
 np.transpose(df_sum.columns_stats)
 
+print('Complete')
+# =============================================================================
+#                              Export Data
+# =============================================================================
+print('Exporting Data...', end='')
+
 #Save csv
 df_hikes.to_csv("../Data/hikes.csv", index = False, encoding = "utf-8")
 df_hikes.to_pickle("../Data/hikes.pkl")
+
+print('Complete')
