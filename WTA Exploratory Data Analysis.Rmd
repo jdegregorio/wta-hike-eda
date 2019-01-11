@@ -1,0 +1,603 @@
+---
+title: "Washington Hike Data - Exploratory Data Analysis"
+output: html_notebook
+---
+
+# Introduction
+
+### Purpose
+The purpose of this workbook is to complete an in-depth exploratory data analysis on the Washington Trails Association (WTA) data set.
+
+### Background/Data
+This data was previously scraped from the WTA website ([link](www.wta.org)) and consists of two tables, hikes and reports. The hike data contains information describing the attributes and location of the hike, while the reports describe individual instances where a hiker or climber visited that location. Some basic cleaning was already completed within the scraping script to parse the data into atomic fields.
+
+# Setup
+
+**Load and Install Packages**
+
+Install all missing packages and load into workspace.
+
+```{r Install Packages}
+
+# List of the required packages
+pack.proj <- c("tidyverse", "stringr", "DataExplorer", "skimr", "ggExtra", 
+               "gridExtra", "grid", "anomalize", "lubridate", "ggseas",
+               "keyring")
+
+# Find packages that are not installed
+pack.new <- pack.proj[!(pack.proj %in% installed.packages()[,"Package"])]
+
+# Install the new packages
+if(length(pack.new)) install.packages(pack.new)
+
+# Load packages
+invisible(lapply(pack.proj, library, character.only=TRUE))
+
+# Load ggmap
+if(!requireNamespace("devtools")) install.packages("devtools")
+devtools::install_github("dkahle/ggmap", ref = "tidyup")
+library(ggmap)
+```
+
+**Plot Settings**
+
+Set some basic ggplot theme settings universally. This helps avoid repeating lines of code for each individual plot.
+
+```{r}
+# Set ggplot theme
+theme_custom <- 
+  theme_light() +
+  theme(strip.background =element_rect(fill="grey40"))
+theme_set(theme_custom)
+
+```
+
+**Setup Google Maps API**
+
+Setup and register the google cloud API. Use the "keyring" package to keep your API key safe!
+
+```{r}
+# Google API Key
+mykey <- key_get("GoogleAPI")
+register_google(key = mykey)
+```
+
+# Import Data
+
+Load the hike and report data from the CSV files generated from the scraping script.
+
+```{r}
+# Load CSV Files
+df.hk <- read.csv("./Data/hikes.csv", header = T, stringsAsFactors = F) %>% 
+  rename(HikeID = ID)
+df.rp <- read.csv("./Data/reports.csv", header = T, stringsAsFactors = F)
+
+# Update Data Types
+df.hk <- df.hk %>%
+  mutate_at(c("Dogs_Leashed", "Dogs_None", "Kid_Friendly", "Campsites", "Lakes", 
+              "Rivers", "Mountain_Views", "Summits", "Ridges_Passes", 
+              "Old_Growth", "Fall_Foliage", "Flowers_Meadows", "Wildlife"), 
+            as.logical)
+```
+
+
+# Data Cleaning
+
+First things first, let's convert the data to the correct formats.
+
+```{r}
+df.rp <- df.rp %>%
+  mutate_at(vars(starts_with("Haz")), as.logical) %>%
+  mutate_at(vars(starts_with("Feat")), as.logical) %>%
+  mutate_at(vars(contains("Date")), as.Date)
+```
+
+To kick off the exploratory data analysis (EDA), let's use utilize the "skim" function in the "skimr" package to create high level summary statistics of the hikes dataset.
+
+```{r}
+# Summarise dataset (skimr)
+skim(df.hk)
+```
+
+As the report shows, the hike distance/elevation data and description is missing from a significant number of the hikes. These fields are expected to be a critical feature for characterizing each hike, but omitted data can cause many problems. Before omitting the hikes with missing values, let's first compare the popularity of these hikes to the ones with complete data.
+
+```{r}
+# Prepare missing data summary
+tmp.plot <- df.hk %>%
+  mutate(MissingData = 
+           is.na(Distance)|
+           is.na(Elevation_Peak)|
+           is.na(Elevation_Gain)|
+           (Description=="")) %>%
+  group_by(MissingData) %>%
+  summarise_at(c("Rating_Cnt", "Trip_Report_Cnt"), sum) %>%
+  ungroup() %>%
+  gather("Variable", "Value", -MissingData)
+
+# Plot data
+ggplot(tmp.plot, aes(x = MissingData, y = Value)) +
+  geom_bar(stat = "identity", alpha = 0.8) +
+  geom_label(aes(label = Value)) +
+  facet_wrap(~Variable) +
+  labs(title = "Popularity of Hikes with/without Distance/Elevation Data",
+       x = "Missing Data",
+       y = "Total")
+
+```
+
+Based on the chart, it is easy to see that the majority of the review ratings and trip reports were written for hikes that were not missing any data. This indicates that the hikes with missing data are likely less popular.  With this realization, the missing data can be omitted without losing too much of the valuable report data. Perhaps in the future, other data sources can be mined to fill in this missing data (alltrails, mountaineers, etc.).
+
+```{r}
+# Omit missing data
+df.hk <- df.hk %>%
+  drop_na()
+
+# Drop reports from omitted hikes
+df.rp <- semi_join(df.rp, df.hk, by = "HikeID")
+
+```
+
+Now, let's create summary statistics for the trip report data.
+
+```{r}
+skim(df.rp)
+```
+
+It appears that there are many reports that are missing condition fields. Let's see if we can determine why. Perhaps, this was a feature added to the report template at some point in time. Let's create a plot to find out.
+
+```{r}
+tmp.plot <- df.rp %>%
+  mutate(ReportDate_MoTot = floor_date(ReportDate, unit = "years"),
+         CondStatus = 
+           !(Cond_Bugs == ""|
+           Cond_Trail == ""|
+           Cond_Road == ""|
+           Cond_Snow == "")) %>%
+  group_by(ReportDate_MoTot, CondStatus) %>%
+  summarise(CondCnt = n()) %>%
+  ungroup() %>%
+  filter(CondStatus == TRUE)
+  
+
+ggplot(tmp.plot, aes(x = ReportDate_MoTot, 
+                     y = CondCnt)) +
+  geom_col(alpha = 0.8, width = 300) +
+  scale_x_date() +
+  labs(title = "Condition Reports over Time (Quarterly)",
+       x = "Report Date",
+       y = "Condition Reports (Monthly Total)")
+
+```
+
+As the chart clearly demonstrates, the condition reports (structured condition data) were added to the report template in July, 2014. 
+
+Let's also confirm that the features/hazards boolean fields are "populated" (opposed to just 100% FALSE) over the time period of interest.
+
+```{r fig.height=12, fig.width=8}
+tmp.plot <- df.rp %>%
+  mutate(ReportDate_YrTot = floor_date(ReportDate, unit = "years")) %>%
+  select(ReportDate_YrTot, starts_with("Haz"), starts_with("Feat")) %>%
+  gather("Variable", "Value", -ReportDate_YrTot) %>%
+  count(ReportDate_YrTot, Variable, Value) %>%
+  group_by(ReportDate_YrTot, Variable) %>%
+  mutate(Ratio = n/sum(n)) %>%
+  ungroup() %>%
+  filter(Value == TRUE)
+  
+
+ggplot(tmp.plot, aes(x = ReportDate_YrTot, 
+                     y = Ratio)) +
+  geom_col(alpha = 0.8, width = 300) +
+  #geom_point(alpha = 0.5) +
+  #geom_line() +
+  scale_x_date() +
+  scale_y_continuous(labels = scales::percent) +
+  facet_wrap(~Variable, ncol = 3, scales = "free_y") +
+  labs(title = "Percentage of Populaated Hazard/Feature Fields Over Time",
+       x = "Date",
+       y = "Ratio of TRUE",
+       col = "Value")
+
+```
+
+As with the condition data, it is apparent that the report template for features and hazards has also changed over time. For example, most of the "Feature" boolean tags were added in 2007. Additionally, it appears that new hazard tags were introduced in 2014.
+
+Since these structured fields will likely be very powerful features, let's filter out the older reports that don't include this data. Based on the large number of reports in recent years,  this should still provide ample training data for our analysis.
+
+
+```{r}
+# Remove reports with missing condition fields
+df.rp <- df.rp %>% 
+  filter(ReportDate >= "2014-08-01")
+
+```
+
+# Exploratory Data Analysis (EDA)
+
+Now with the data clean and consistent, let's explore each of the key fields.
+
+Naturally, let's start by mapping the hikes.
+
+```{r fig.height=10, fig.width=10}
+
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+
+tmp.plot <- df.hk %>%
+  mutate(Trip_Report_Cnt = 1 + 3*range01(Trip_Report_Cnt))
+
+map <- get_map(location = c(lon = mean(df.hk$Long), lat = mean(df.hk$Lat)), 
+               zoom = 7, maptype = "terrain", scale = 2)
+
+ggmap(map) +
+  geom_point(data = tmp.plot, 
+             aes(x = Long, y = Lat, fill = Rating, 
+                 alpha = 0.8, size = Trip_Report_Cnt), shape = 21) +
+  scale_fill_gradient(low = "grey40", high = "red") +
+  guides(alpha=FALSE) +
+  labs(title = "Overview Map of WTA Trip Reports",
+       fill = "Average\nRating",
+       size = "Trip Report\nCount\n(Scaled)",
+       x = "Longitude", y = "Latitude")
+
+```
+
+We can also split up the maps by the specified region.
+
+```{r fig.height=20, fig.width=6, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+maps <- list()
+
+for (i in 1:length(unique(df.hk$Region))) {
+  
+  # Define Region
+  tmp.region <- unique(df.hk$Region)[i]
+  
+  # Filter data for region
+  tmp.plot <- df.hk %>%
+    mutate(Trip_Report_Cnt = 1 + 3*range01(Trip_Report_Cnt)) %>%
+    filter(Region == tmp.region)
+  
+  # Define map boundary
+  tmp.bounds = c(left = min(tmp.plot$Long),
+                 bottom = min(tmp.plot$Lat),
+                 right = max(tmp.plot$Long),
+                 top = max(tmp.plot$Lat))
+  
+  # Add margin
+  tmp.bounds <- tmp.bounds + 0.5*c(-1, -1, 1, 1)
+  
+  # Download map
+  tmp.map <- get_map(location = tmp.bounds,
+                 maptype = "terrain", scale = 2, crop = T)
+  
+  # Plot Map
+  tmp.mapplot <- ggmap(tmp.map) +
+    geom_point(data = tmp.plot, 
+               aes(x = Long, y = Lat, fill = Rating, 
+                   alpha = 0.8, size = Trip_Report_Cnt), shape = 21) +
+    scale_fill_gradient(low = "grey40", high = "red") +
+    guides(alpha = F, fill = F, size = F) +
+    labs(title = tmp.region,
+         fill = "Average\nRating",
+         size = "Trip Report\nCount\n(Scaled)",
+         x = "Longitude", y = "Latitude")
+    
+  maps[[i]] <- tmp.mapplot
+}
+
+
+grid.arrange(maps[[1]], maps[[2]], maps[[3]], maps[[4]], maps[[5]], 
+             maps[[6]], maps[[7]], maps[[8]], maps[[9]], maps[[10]], 
+             maps[[11]], ncol = 2)
+
+```
+
+**Summarize Hike Distance/Elevation Gain**
+
+```{r message=FALSE, warning=FALSE}
+p <- ggplot(df.hk, aes(x = Distance, y = Elevation_Gain)) +
+  geom_point(alpha = 0.1, size = 1.5) +
+  geom_density2d(col = "darkblue", alpha = 0.8) +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  #lims(x = c(0,25),y = c(0, 6000)) +
+  labs(title = "Relationship & Distribution of Distance and Elevation Gain",
+       subtitle = "Data shown on log-log scale",
+       x = "Distance (mi)",
+       y = "Elevation Gain (ft)")
+
+p <- ggMarginal(p, type = "histogram", alpha = 0.7)
+```
+
+```{r}
+grid.newpage()
+grid.draw(p)
+```
+
+
+**Summarize Hike Rating/Report Data**
+```{r message=FALSE, warning=FALSE}
+p <- ggplot(df.hk, aes(x = Trip_Report_Cnt, y = Rating_Cnt)) +
+  geom_point(alpha = 0.1, size = 1.5) +
+  #geom_density2d(col = "darkblue", alpha = 0.8) +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  #lims(x = c(0,25),y = c(0, 6000)) +
+  labs(title = "Relationship & Distribution of Trip Reports and Review Counts",
+       subtitle = "Data shown on log-log scale",
+       x = "Trip Report Count",
+       y = "Review Count")
+
+p <- ggMarginal(p, type = "histogram", alpha = 0.7)
+```
+
+```{r}
+grid.newpage()
+grid.draw(p)
+```
+
+**Summarize Hike Features**
+```{r}
+tmp.plot <- df.hk %>%
+  select_if(is.logical) %>%
+  gather(Feature, Value) %>%
+  count(Feature, Value) %>%
+  group_by(Feature) %>%
+  mutate(Percent = round(n/sum(n), 3)) %>%
+  ungroup() %>%
+  filter(Value == TRUE) %>%
+  mutate(Feature = str_replace(Feature, "_", " "))
+
+ggplot(tmp.plot, aes(x = reorder(Feature, Percent), y = Percent)) + 
+  geom_bar(stat = "identity", alpha = 0.7) +
+  geom_hline(yintercept = 0.5, linetype = "dotted") +
+  scale_y_continuous(labels = scales::percent, limits = c(0,1)) +
+  coord_flip() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(title = "Hike Feature Summary",
+       x = "Features",
+       y = "Percent True")
+
+```
+
+**Description Length**
+
+```{r}
+tmp.plot <- df.hk %>%
+  select(Description) %>%
+  mutate(Length = str_length(Description)) %>%
+  filter (Length > 0)
+
+ggplot(tmp.plot, aes(x = Length)) +
+  geom_histogram(alpha = 0.7, col = "black", bins = 40) +
+  labs(title = "Description Length Histogram",
+       x = "Length (# of Characters)",
+       y = "Count")
+```
+
+**Hike Report Dates**
+
+To explore the date/time elements of the data, we must complete some basic transformations to gather the month, week, and day-of-week from each of the report dates.
+
+```{r}
+tmp.plot.all <- df.rp %>%
+  mutate(rpdt_mo = floor_date(ReportDate, unit = "month"),
+         rpdt_wk = floor_date(ReportDate, unit = "week"),
+         rp_wk = week(ReportDate),
+         rp_wday = wday(ReportDate, label = T, week_start = 1))
+  
+```
+
+Now we can use the "ggseas" package to decompose the time series data to expose trends, seasonality, and noise factors.
+
+```{r fig.height=8, fig.width=8}
+tmp.plot <- tmp.plot.all %>%
+  count(rpdt_wk)
+
+# Seasonal Decomposition of Time Series by Loess
+ggsdc(tmp.plot, aes(x = rpdt_wk, y = n), method = "stl", 
+      frequency = 52,  s.window = "periodic",
+      facet.titles = c("Observed", "Trend", "Seasonal", "Irregular")) + 
+  geom_line()
+```
+
+Now plot the reports by day-of-week to find the most popular days to go hiking.
+
+```{r}
+tmp.plot <- tmp.plot.all %>%
+  count(rp_wday)
+
+ggplot(tmp.plot, aes(x = rp_wday, y = n)) +
+  geom_col(alpha = 0.7) +
+  labs(title = "Reports by Day of Week",
+       x = "Day of Week",
+       y = "Report Count")
+
+```
+
+**Hike Condition Seasonality**
+
+The hike conditions are a function of environmental conditions. For this reason, it is best to visualize the data as a function of time of year and elevation. To achieve this, we must do some preprocessing and build a function for plotting the data for each condition field.
+```{r}
+
+# Filter and group elevation data
+tmp.plot.cond <- tmp.plot.all %>%
+  left_join(df.hk %>% select(HikeID, Elevation_Peak), 
+            by = "HikeID") %>%
+  filter(Elevation_Peak <= 8000) %>%
+  mutate(Elevation_Peak = cut(Elevation_Peak, 
+                              breaks = seq(0,10000,2000),
+                              labels = paste0("Peak Elevation: ",
+                                              seq(0, 8, 2),
+                                              "k - ",
+                                              seq(0, 8, 2) + 2,
+                                              "k (ft)")))
+
+# Define a function for plotting condition data
+plotConditions <- function (feat, cond_name, baseline, 
+                            color_pal = "Blues", leg.pos = "bottom") {
+  
+  tmp.empty <- expand.grid(1:52, 
+                           unique(tmp.plot.cond$Elevation_Peak),
+                           unique(tmp.plot.cond[[feat]]),
+                           0)
+  
+  names(tmp.empty) <- c("rp_wk", "Elevation_Peak", "Feature", "n")
+  
+  tmp.plot <- tmp.plot.cond %>%
+    select(rp_wk, Elevation_Peak, Feature = feat) %>%
+    count(rp_wk, Elevation_Peak, Feature) %>%
+    bind_rows(tmp.empty) %>%
+    group_by(rp_wk, Elevation_Peak, Feature) %>%
+    summarise(n = sum(n)) %>%
+    ungroup() %>%
+    group_by(rp_wk, Elevation_Peak) %>%
+    mutate(Rate = n/sum(n)) %>%
+    ungroup() %>%
+    filter(Feature != baseline)
+  
+  ggplot(tmp.plot, aes(x = rp_wk, y = Rate, 
+                       fill = reorder(Feature, desc(Rate)))) +
+    geom_area(alpha = 0.9, col = "grey") +
+    scale_y_continuous(labels = scales::percent) +
+    scale_fill_brewer(palette = color_pal) +
+    facet_grid(Elevation_Peak~.) +
+    theme(legend.position = leg.pos,
+          legend.direction = "vertical",
+          legend.background = element_rect(color = "grey")) +
+    labs(title = paste0(cond_name, " Seasonality"),
+         subtitle = "Measured by time of year and Peak Elevation",
+         x = "Week of Year",
+         y = "Rate of Occurence",
+         fill = paste0(cond_name, " Rating"))
+}
+
+
+
+```
+
+```{r fig.height=8, fig.width=8}
+plotConditions("Feat_Ripeberries", "Ripe Berries", FALSE, 
+               "Blues", leg.pos = "none")
+```
+
+Fall Foliage SEasonality
+
+```{r fig.height=8, fig.width=8}
+plotConditions("Feat_Fallfoliage", "Fall Foliage", FALSE, 
+               "Reds", leg.pos = "none")
+```
+
+```{r fig.height=8, fig.width=8}
+plotConditions("Feat_Wildflowersblooming", "Wildflower", FALSE, 
+               "Reds", leg.pos = "none")
+```
+
+```{r fig.height=10, fig.width=8}
+plotConditions("Cond_Snow", "Snow Hazard", "Snow free", "Blues")
+```
+
+```{r fig.height=10, fig.width=8}
+plotConditions("Cond_Bugs", "Insect Hazard", "No bugs", "Greens")
+```
+
+```{r fig.height=10, fig.width=8}
+plotConditions("Cond_Road", "Road Hazard", "Road suitable for all vehicles", "Reds")
+```
+
+```{r fig.height=10, fig.width=8}
+plotConditions("Cond_Trail", "Trail", "Trail in good condition", "Greys")
+```
+
+
+**Other Report Metrics**
+
+The trip reports on WTA are submitted by a dedicated community of outdoor enthusiests. The plot below shows the top 50 contributors.
+
+```{r fig.height=6, fig.width=8}
+tmp.plot <- df.rp %>%
+  count(Author) %>%
+  top_n(50)
+
+ggplot(tmp.plot, aes(x= reorder(Author, n), y = n, ymax = n)) +
+  geom_pointrange(ymin = 0) +
+  geom_text(aes(y = n + 5, label = n), size = 2) +
+  coord_flip() +
+  theme(axis.text.y = element_text(size = 7)) +
+  labs(title = "Report Counts by Author",
+       subtitle = "Top 50 from August 2014 to August 2018",
+       x = "Author",
+       y = "Report Count")
+```
+
+Summarize the hike types in the data.
+
+```{r}
+tmp.plot <- df.rp %>%
+  count(TypeofHike) %>%
+  mutate(Percent = round(n/sum(n), 3))
+
+ggplot(tmp.plot, aes(x = reorder(TypeofHike, Percent), y = Percent)) + 
+  geom_bar(stat = "identity", alpha = 0.7) +
+  scale_y_continuous(labels = scales::percent, limits = c(0,1)) +
+  coord_flip() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(title = "Hike Type Summary",
+       x = "Type of Hike",
+       y = "Percentage of Total")
+```
+
+Last but not least, a plot of the report text length and the number of "This report was helpful" tags associated with the reports.
+
+```{r}
+tmp.plot <- df.rp %>%
+  select(ReportBody) %>%
+  mutate(Length = str_length(ReportBody))
+
+ggplot(tmp.plot, aes(x = Length)) +
+  geom_histogram(alpha = 0.7, col = "black", bins = 50) +
+  lims(x = c(0,7500)) +
+  labs(title = "Report Length Histogram",
+       x = "Length (# of Characters)",
+       y = "Report Count")
+
+ggplot(df.rp, aes(x = ReportHelpfulCnt)) +
+  geom_histogram(alpha = 0.7, col = "black", bins = 30) +
+  scale_y_continuous(trans = "log10") +
+  lims(x = c(-1,50)) +
+  labs(title = "Report Helpful Count Histogram",
+       subtitle = "The number of helpful tags per trip report",
+       x = "Helpful Tags (Total Count)",
+       y = "Report Count")
+  
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
