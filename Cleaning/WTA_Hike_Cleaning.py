@@ -75,7 +75,7 @@ print('Cleaning Variables...\n')
 cleanpy.dropdupcol(df_hikes)
 
 #Remove text that appears at start/end of record within a column
-cleanpy.chopsubstrings(df_hikes, exclude = ['URL'], inplace = True)
+cleanpy.chopsubstrings(df_hikes, exclude = ['URL', 'Lat', 'Long'], inplace = True)
 
 #Split/strip text that appears to be categorical from start/end each record in column
 cleanpy.splitsubstrings(df_hikes, exclude = ['URL'], nuq_max = 5, inplace = True)
@@ -94,7 +94,6 @@ for i in list(range(0,df_hikes.shape[0])):
         pat = df_hikes.Location[i]
         df_hikes.Trailhead[i] = df_hikes.Trailhead[i].replace(pat, '').strip()
     #Clean Location
-
     if type(df_hikes.Region[i]) == str:
         pat = df_hikes.Region[i] + ' -- '
         df_hikes.Location[i] = df_hikes.Location[i].replace(pat, '').strip()
@@ -136,17 +135,16 @@ for col in df_hikes.columns:
     if (tp & nu):
         col_cat.append(col)
 
-#for col in col_cat:
-#    print(col)
-#    print(df_hikes[col].value_counts()[:6])
-#    print()
-
 df_hikes[col_cat] = df_hikes[col_cat].astype('category')
+
+#Estimate missing GPS Coordinates
+df_hikes = cleanpy.estlatlong(df_hikes, 'Trailhead')
+df_hikes = cleanpy.estlatlong(df_hikes, 'Location')
 
 # Organize Columns
 gp_core = ['ID', 'URL', 'Name']
 gp_area = ['Region', 'Location','Trailhead']
-gp_gps = ['Lat', 'Long']
+gp_gps = ['Lat', 'Long', 'Coord_Type']
 gp_stats = ['Distance', 'Distance_Type', 'Elevation_Gain', 'Elevation_Peak']
 gp_text = ['Description', 'Directions']
 gp_pop = ['Rating', 'Rating_Cnt', 'Trip_Report_Cnt']

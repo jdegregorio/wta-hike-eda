@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# HTML
+*.html
+
 # Distribution / packaging
 .Python
 build/
@@ -139,3 +142,4 @@ vignettes/*.pdf
 
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
+.Rproj.user

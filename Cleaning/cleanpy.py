@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np
+
 def chopseries( s , search = 'end', nuq_min = 1, nuq_max = 5, thres = 0.3, char_min = 4):
 
     # =========================================================================
@@ -327,3 +329,54 @@ def dropdupcol( df ):
         df.drop(columns = col, inplace=True)
 
     return
+
+def estlatlong( df , est_by,  inplace=False):
+
+    #Fill in using average Trailhead location (if available)
+    df_temp = df.groupby(by=est_by, as_index=False).agg({'Lat':np.mean,'Long':np.mean}, axis=1)
+    df_temp.rename(columns={'Lat': 'Lat_est', 'Long': 'Long_est'}, inplace=True)
+
+    #Track initial null values
+    null_cnt_0 = df.Lat.isnull().sum()
+
+    df = df.merge(df_temp, on=est_by)
+    df['Coord_Type'] = np.where(df.Lat.isnull(), 'Est - ' + est_by, 'Actual')
+    df.Lat = np.where(df.Lat.isnull(), df.Lat_est, df.Lat)
+    df.Long = np.where(df.Long.isnull(), df.Long_est, df.Long)
+
+    #Track final null values
+    null_cnt_1 = df.Lat.isnull().sum()
+
+    #Drop temporary merged columns
+    df.drop(['Lat_est', 'Long_est'], axis=1, inplace=True)
+
+    #Print results
+    print('Null values reduced from %d to %d' % (null_cnt_0, null_cnt_1))
+
+    return df
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
